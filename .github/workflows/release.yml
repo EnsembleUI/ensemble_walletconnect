@@ -36,7 +36,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: stable
+          flutter-version: '3.27.2'
 
       - name: Validate version format
         id: validate_version
@@ -348,69 +348,6 @@ jobs:
               repo: context.repo.repo,
               release_id: release.id,
               body: updatedBody
-            });
-
-      - name: Create Success Issue
-        if: success()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '🎉 Release ${{ steps.validate_version.outputs.VERSION }} completed successfully',
-              body: `## Release Summary
-
-              **Version**: ${{ steps.validate_version.outputs.VERSION }}
-              **Tag**: ${{ steps.validate_version.outputs.TAG }}
-              **Released by**: @${{ github.actor }}
-              **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-              ## What was done:
-              - ✅ Updated \`pubspec.yaml\` version
-              - ✅ Updated \`CHANGELOG.md\`
-              - ✅ Committed changes to main branch
-              - ✅ Created and pushed git tag
-              - ✅ Created GitHub release
-              - ✅ Published to pub.dev
-
-              ## Links:
-              - 🏷️ [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})
-              - 📦 [pub.dev Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})
-
-              The package is now available for installation! 🚀`,
-              labels: ['release', 'success']
-            });
-
-      - name: Create Failure Issue
-        if: failure()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '❌ Manual release failed for version ${{ github.event.inputs.version }}',
-              body: `The manual release workflow failed.
-
-              **Version**: ${{ github.event.inputs.version }}
-              **Initiated by**: @${{ github.actor }}
-              **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-              Please check the workflow logs and complete the release manually if needed.
-
-              ## Manual Recovery:
-              \`\`\`bash
-              # Update version manually
-              # Update CHANGELOG.md
-              git add pubspec.yaml CHANGELOG.md
-              git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
-              git push origin main
-              git tag v${{ github.event.inputs.version }}
-              git push origin v${{ github.event.inputs.version }}
-              dart pub publish
-              \`\`\``,
-              labels: ['bug', 'release', 'automation']
             });
 
       - name: Summary
