@@ -186,7 +186,7 @@ jobs:
             Workflow: ${{ github.workflow }}"
             
             # Push changes
-            git push origin main
+            git push origin master
             
             echo "✅ Committed and pushed version changes"
             echo "COMMITTED=true" >> $GITHUB_OUTPUT
