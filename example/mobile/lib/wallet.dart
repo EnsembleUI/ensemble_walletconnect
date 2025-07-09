@@ -1,5 +1,5 @@
 import 'package:algorand_dart/algorand_dart.dart';
-import 'package:walletconnect_dart/walletconnect_dart.dart';
+import 'package:ensemble_walletconnect/ensemble_walletconnect.dart';
 
 class WalletConnector {
   final Algorand algorand;

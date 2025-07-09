@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:walletconnect_dart/src/crypto/encrypted_payload.dart';
+import 'package:ensemble_walletconnect/src/crypto/encrypted_payload.dart';
 
 /// an algorithm interface for performing encryption or decryption
 abstract class CipherBox {

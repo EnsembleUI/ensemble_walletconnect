@@ -1,4 +1,4 @@
-library walletconnect;
+library ensemble_walletconnect;
 
 export 'src/api/api.dart';
 export 'src/crypto/crypto.dart';

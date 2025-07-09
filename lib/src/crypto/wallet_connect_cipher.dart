@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
 import 'package:cryptography/cryptography.dart';
-import 'package:walletconnect_dart/src/crypto/cipher_box.dart';
-import 'package:walletconnect_dart/src/crypto/encrypted_payload.dart';
-import 'package:walletconnect_dart/src/exceptions/wallet_connect_exception.dart';
+import 'package:ensemble_walletconnect/src/crypto/cipher_box.dart';
+import 'package:ensemble_walletconnect/src/crypto/encrypted_payload.dart';
+import 'package:ensemble_walletconnect/src/exceptions/wallet_connect_exception.dart';
 
 /// WalletConnect protocol implementation of the encryption/decryption
 /// algorithms

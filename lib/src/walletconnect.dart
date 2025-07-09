@@ -3,17 +3,17 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:ensemble_walletconnect/src/api/api.dart';
+import 'package:ensemble_walletconnect/src/crypto/crypto.dart';
+import 'package:ensemble_walletconnect/src/crypto/encrypted_payload.dart';
+import 'package:ensemble_walletconnect/src/exceptions/exceptions.dart';
+import 'package:ensemble_walletconnect/src/network/network.dart';
+import 'package:ensemble_walletconnect/src/session/session.dart';
+import 'package:ensemble_walletconnect/src/utils/bridge_utils.dart';
+import 'package:ensemble_walletconnect/src/utils/event.dart';
+import 'package:ensemble_walletconnect/src/utils/event_bus.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:uuid/uuid.dart';
-import 'package:walletconnect_dart/src/api/api.dart';
-import 'package:walletconnect_dart/src/crypto/crypto.dart';
-import 'package:walletconnect_dart/src/crypto/encrypted_payload.dart';
-import 'package:walletconnect_dart/src/exceptions/exceptions.dart';
-import 'package:walletconnect_dart/src/network/network.dart';
-import 'package:walletconnect_dart/src/session/session.dart';
-import 'package:walletconnect_dart/src/utils/bridge_utils.dart';
-import 'package:walletconnect_dart/src/utils/event.dart';
-import 'package:walletconnect_dart/src/utils/event_bus.dart';
 
 const ethSigningMethods = [
   'eth_sendTransaction',

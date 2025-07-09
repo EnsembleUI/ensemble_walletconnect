@@ -12,7 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   # WalletConnect
-  walletconnect_dart:
+  ensemble_walletconnect:
     path: ../../
 
   # Algorand

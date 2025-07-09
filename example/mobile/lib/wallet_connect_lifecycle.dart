@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:walletconnect_dart/walletconnect_dart.dart';
+import 'package:ensemble_walletconnect/ensemble_walletconnect.dart';
 
 class WalletConnectLifecycle extends StatefulWidget {
   final WalletConnect connector;

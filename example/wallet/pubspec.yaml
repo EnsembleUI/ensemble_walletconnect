@@ -10,7 +10,7 @@ dependencies:
   path: ^1.8.0
 
   # WalletConnect
-  walletconnect_dart:
+  ensemble_walletconnect:
     path: ../../
 
   # Algorand

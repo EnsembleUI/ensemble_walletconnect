@@ -1,4 +1,4 @@
-import 'package:walletconnect_dart/walletconnect_dart.dart';
+import 'package:ensemble_walletconnect/ensemble_walletconnect.dart';
 
 abstract class TransactionTester {
   TransactionTester({required this.connector});

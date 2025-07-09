@@ -1,5 +1,5 @@
-<p align="center"> 
-<img src="https://eidoohelp.zendesk.com/hc/article_attachments/360071262952/mceclip0.png">
+<p align="center">
+<img width="1500" height="500" alt="WalletConnect" src="https://github.com/user-attachments/assets/8150766b-7ac4-4eff-85f2-8c56d18e2bf5" />
 </p>
 
 [![pub.dev][pub-dev-shield]][pub-dev-url]
@@ -15,7 +15,7 @@ phone, making WalletConnect wallets a safer choice compared to desktop or browse
 ## Introduction
 WalletConnect connects mobile & web applications to supported mobile wallets. The WalletConnect session is started by scanning a QR code (desktop) or by clicking an application deep link (mobile).
 
-WalletConnect-Dart-SDK is a community SDK and port of the official WalletConnect-monorepo.
+Ensemble WalletConnect is a community SDK and port of the official WalletConnect-monorepo.
 
 WalletConnect-Dart currently supports:
 * Algorand
@@ -45,6 +45,21 @@ final connector = WalletConnect(
       ],
     ),
 );
+```
+
+## Installation
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  ensemble_walletconnect: ^1.0.0
+```
+
+Then run:
+
+```bash
+$ flutter pub get
 ```
 
 ## Usage
@@ -166,29 +181,30 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 ## Contributing & Pull Requests
 Feel free to send pull requests.
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Credits
 
-- [Tomas Verhelst](https://github.com/rootsoft)
-- [Tom Friml](https://github.com/3ph)
-- [juampiq6](https://github.com/juampiq6)  
+- [Tomas Verhelst](https://github.com/rootsoft) - Original author
+- [Tom Friml](https://github.com/3ph) - Original contributor
+- [juampiq6](https://github.com/juampiq6) - Original contributor
+- [Ensemble Team](https://github.com/EnsembleUI) - Maintainers
 - [All Contributors](../../contributors)
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[pub-dev-shield]: https://img.shields.io/pub/v/walletconnect_dart?style=for-the-badge
-[pub-dev-url]: https://pub.dev/packages/walletconnect_dart
+[pub-dev-shield]: https://img.shields.io/pub/v/ensemble_walletconnect?style=for-the-badge
+[pub-dev-url]: https://pub.dev/packages/ensemble_walletconnect
 [effective-dart-shield]: https://img.shields.io/badge/style-effective_dart-40c4ff.svg?style=for-the-badge
 [effective-dart-url]: https://github.com/tenhobi/effective_dart
-[stars-shield]: https://img.shields.io/github/stars/rootsoft/walletconnect-dart-sdk.svg?style=for-the-badge&logo=github&colorB=deeppink&label=stars
-[stars-url]: https://packagist.org/packages/rootsoft/walletconnect-dart-sdk
-[issues-shield]: https://img.shields.io/github/issues/rootsoft/walletconnect-dart-sdk.svg?style=for-the-badge
-[issues-url]: https://github.com/rootsoft/walletconnect-dart-sdk/issues
-[license-shield]: https://img.shields.io/github/license/rootsoft/walletconnect-dart-sdk.svg?style=for-the-badge
-[license-url]: https://github.com/RootSoft/walletconnect-dart-sdk/blob/master/LICENSE
+[stars-shield]: https://img.shields.io/github/stars/EnsembleUI/ensemble_walletconnect.svg?style=for-the-badge&logo=github&colorB=deeppink&label=stars
+[stars-url]: https://github.com/EnsembleUI/ensemble_walletconnect
+[issues-shield]: https://img.shields.io/github/issues/EnsembleUI/ensemble_walletconnect.svg?style=for-the-badge
+[issues-url]: https://github.com/EnsembleUI/ensemble_walletconnect/issues
+[license-shield]: https://img.shields.io/github/license/EnsembleUI/ensemble_walletconnect.svg?style=for-the-badge
+[license-url]: https://github.com/EnsembleUI/ensemble_walletconnect/blob/master/LICENSE

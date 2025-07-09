@@ -1,4 +1,4 @@
-import 'package:walletconnect_dart/src/walletconnect.dart';
+import 'package:ensemble_walletconnect/src/walletconnect.dart';
 
 /// A generic interface that can be implemented to provide various provider
 /// implementations.

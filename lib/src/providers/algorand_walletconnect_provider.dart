@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:walletconnect_dart/src/exceptions/exceptions.dart';
-import 'package:walletconnect_dart/src/providers/wallet_connect_provider.dart';
-import 'package:walletconnect_dart/src/walletconnect.dart';
+import 'package:ensemble_walletconnect/src/exceptions/exceptions.dart';
+import 'package:ensemble_walletconnect/src/providers/wallet_connect_provider.dart';
+import 'package:ensemble_walletconnect/src/walletconnect.dart';
 
 /// A provider implementation to easily support the Algorand blockchain.
 class AlgorandWalletConnectProvider extends WalletConnectProvider {

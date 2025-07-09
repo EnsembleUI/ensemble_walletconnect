@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart';
 import 'package:mobile_dapp/transaction_tester.dart';
-import 'package:walletconnect_dart/walletconnect_dart.dart';
+import 'package:ensemble_walletconnect/ensemble_walletconnect.dart';
 import 'package:web3dart/src/crypto/secp256k1.dart';
 import 'package:web3dart/web3dart.dart';
 

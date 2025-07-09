@@ -1,6 +1,6 @@
 import 'package:algorand_dart/algorand_dart.dart';
 import 'package:mobile_dapp/transaction_tester.dart';
-import 'package:walletconnect_dart/walletconnect_dart.dart';
+import 'package:ensemble_walletconnect/ensemble_walletconnect.dart';
 
 class AlgorandTransactionTester extends TransactionTester {
   final Algorand algorand;

@@ -1,19 +1,19 @@
-name: walletconnect_dart
-description: Open protocol for connecting decentralised applications to mobile wallets with QR code scanning or deep linking.
-version: 0.0.11
+name: ensemble_walletconnect
+description: Open protocol for connecting decentralized applications to mobile wallets with QR code scanning or deep linking.
+version: 1.0.0
 homepage: https://walletconnect.org/
-repository: https://github.com/RootSoft/walletconnect-dart-sdk
-issue_tracker: https://github.com/RootSoft/walletconnect-dart-sdk/issues
+repository: https://github.com/EnsembleUI/ensemble_walletconnect
+issue_tracker: https://github.com/EnsembleUI/ensemble_walletconnect/issues
 
 environment:
-  sdk: ">=2.14.0 <3.0.0"
+  sdk: ">=2.15.0 <4.0.0"
 
 dependencies:
   # WebSocket Channel
   web_socket_channel: ^2.1.0
 
   # UUID
-  uuid: ^3.0.5
+  uuid: ^4.5.1
 
   # Cryptography
   cryptography: ^2.0.5
@@ -36,3 +36,13 @@ dev_dependencies:
 
   # Build runner
   build_runner: ^2.1.7
+
+# Topics help users discover your package
+topics:
+  - walletconnect
+  - web3
+  - dapp
+  - blockchain
+  - crypto
+  - ethereum
+  - algorand
