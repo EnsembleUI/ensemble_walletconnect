@@ -16,23 +16,23 @@ jobs:
   release:
     name: Manual Release Process
     runs-on: ubuntu-latest
-    
+
     permissions:
-      contents: write  # Required for commits and tags
-      id-token: write  # Required for pub.dev publishing
-    
+      contents: write # Required for commits and tags
+      id-token: write # Required for pub.dev publishing
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history
+          fetch-depth: 0 # Fetch full history
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Set up Dart
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-          
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -43,14 +43,14 @@ jobs:
         id: validate_version
         run: |
           VERSION="${{ github.event.inputs.version }}"
-          
+
           # Check if version matches semantic versioning pattern
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][a-zA-Z0-9.-]+)?$ ]]; then
             echo "❌ Invalid version format: $VERSION"
             echo "Please use semantic versioning format like: 1.0.2, 2.1.0-beta.1, etc."
             exit 1
           fi
-          
+
           echo "✅ Version format is valid: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
@@ -60,19 +60,19 @@ jobs:
         run: |
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
           TAG="${{ steps.validate_version.outputs.TAG }}"
-          
+
           # Check if tag already exists
           if git tag -l | grep -q "^$TAG$"; then
             echo "❌ Tag $TAG already exists!"
             echo "Please choose a different version or delete the existing tag first."
             exit 1
           fi
-          
+
           # Check current version in pubspec.yaml
           CURRENT_VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
           echo "Current version in pubspec.yaml: $CURRENT_VERSION"
           echo "Requested version: $VERSION"
-          
+
           if [ "$CURRENT_VERSION" = "$VERSION" ]; then
             echo "⚠️ Version $VERSION is already in pubspec.yaml"
             echo "NEEDS_UPDATE=false" >> $GITHUB_OUTPUT
@@ -85,12 +85,12 @@ jobs:
         if: steps.check_existing.outputs.NEEDS_UPDATE == 'true'
         run: |
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
-          
+
           # Update version in pubspec.yaml
           sed -i "s/^version: .*/version: $VERSION/" pubspec.yaml
-          
+
           echo "✅ Updated pubspec.yaml version to $VERSION"
-          
+
           # Verify the change
           NEW_VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
           echo "Verified version in pubspec.yaml: $NEW_VERSION"
@@ -99,10 +99,10 @@ jobs:
         run: |
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
           CUSTOM_NOTES="${{ github.event.inputs.changelog }}"
-          
+
           # Create a backup
           cp CHANGELOG.md CHANGELOG.md.bak
-          
+
           # Check if version already exists in changelog
           if grep -q "^## $VERSION" CHANGELOG.md; then
             echo "ℹ️ Version $VERSION already exists in CHANGELOG.md, skipping update"
@@ -154,10 +154,10 @@ jobs:
         run: |
           echo "📦 Installing dependencies..."
           dart pub get
-          
+
           echo "🔍 Running analysis..."
           dart analyze lib/ test/ || echo "⚠️ Analysis completed with issues, continuing..."
-          
+
           echo "🧪 Running tests..."
           dart test --coverage || echo "⚠️ Tests failed or no tests found, continuing..."
 
@@ -165,11 +165,11 @@ jobs:
         id: commit_changes
         run: |
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
-          
+
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Check if there are changes to commit
           if git diff --quiet && git diff --cached --quiet; then
             echo "No changes to commit"
@@ -202,7 +202,7 @@ jobs:
         run: |
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
           CUSTOM_NOTES="${{ github.event.inputs.changelog }}"
-          
+
           if [ -n "$CUSTOM_NOTES" ]; then
             # Use custom notes
             echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
@@ -256,17 +256,17 @@ jobs:
         run: |
           TAG="${{ steps.validate_version.outputs.TAG }}"
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
-          
+
           # Create annotated tag with changelog
           git tag -a "$TAG" -m "Release $VERSION
 
           Released by: ${{ github.actor }}
-          
+
           ${{ steps.changelog.outputs.RELEASE_NOTES }}"
-          
+
           # Push the tag
           git push origin "$TAG"
-          
+
           echo "✅ Created and pushed tag: $TAG"
 
       - name: Create GitHub Release
@@ -279,93 +279,30 @@ jobs:
           release_name: Release ${{ steps.validate_version.outputs.VERSION }}
           body: |
             ## Changes in ${{ steps.validate_version.outputs.VERSION }}
-            
+
             ${{ steps.changelog.outputs.RELEASE_NOTES }}
-            
+
             ## Installation
-            
+
             Add this to your package's `pubspec.yaml` file:
-            
+
             ```yaml
             dependencies:
               ensemble_walletconnect: ^${{ steps.validate_version.outputs.VERSION }}
             ```
-            
+
             Then run:
             ```bash
             flutter pub get
             ```
-            
+
             ## Documentation
-            
+
             - [pub.dev package](https://pub.dev/packages/ensemble_walletconnect)
             - [API documentation](https://pub.dev/documentation/ensemble_walletconnect)
             - [Repository](https://github.com/EnsembleUI/ensemble_walletconnect)
-            
+
             ---
             Released by: @${{ github.actor }}
           draft: false
           prerelease: false
-
-      - name: Setup pub credentials and publish
-        env:
-          PUB_TOKEN: ${{ secrets.PUB_TOKEN }}
-        run: |
-          if [ -z "$PUB_TOKEN" ]; then
-            echo "❌ Error: PUB_TOKEN secret is not set"
-            echo "Please set up the PUB_TOKEN secret in your repository settings"
-            echo "See https://dart.dev/tools/pub/automated-publishing for instructions"
-            exit 1
-          fi
-          
-          # Create credentials directory
-          mkdir -p ~/.pub-cache
-          
-          # Set up the token using the new method
-          echo "Setting up pub.dev authentication..."
-          dart pub token add https://pub.dev/packages/ensemble_walletconnect/ --env-var PUB_TOKEN
-
-          # Verify token is set up
-          dart pub token list
-          
-          # Publish to pub.dev
-          echo "🚀 Publishing to pub.dev..."
-          dart pub publish --force
-          
-          echo "✅ Successfully published to pub.dev!"
-
-      - name: Update release with pub.dev link
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data: release } = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: '${{ steps.validate_version.outputs.TAG }}'
-            });
-            
-            const updatedBody = release.body + '\n\n📦 **Published to pub.dev:** https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }}';
-            
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.id,
-              body: updatedBody
-            });
-
-      - name: Summary
-        if: always()
-        run: |
-          echo "## Manual Release Workflow Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Requested Version**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Initiated by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag**: ${{ steps.validate_version.outputs.TAG }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "- **Result**: ✅ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
-            echo "- **GitHub Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})" >> $GITHUB_STEP_SUMMARY
-            echo "- **pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Result**: ❌ Release failed - check logs above" >> $GITHUB_STEP_SUMMARY
-          fi 
