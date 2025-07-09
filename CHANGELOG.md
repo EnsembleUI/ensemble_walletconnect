@@ -1,5 +1,21 @@
 ## 1.0.0
 
+## 1.0.1
+
+### Changes
+
+* fix branch
+* Fix package validation step order
+* Fix analysis errors by excluding broken example directory
+* Update CI workflow to enhance analysis error handling
+* Remove success and failure issue creation steps from CI workflow and update Flutter version to 3.27.2 for compatibility.
+* Update CI workflow to use Flutter version 3.27.2 for compatibility with Dart 2.18.0
+* Fix CI workflow with correct Flutter versions (3.24.5, 3.27.2)
+* Update SDK constraints and CI workflow for Flutter versions
+* Update CI workflow to improve error handling during formatting, analysis, and testing
+* Update CI workflow to include specific Flutter versions for stable and beta Dart channels
+
+
 * **BREAKING**: Package renamed from `walletconnect_dart` to `ensemble_walletconnect`
 * Forked from RootSoft/walletconnect-dart-sdk to maintain updates
 * Updated repository URLs and package metadata
