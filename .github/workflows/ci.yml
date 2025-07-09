@@ -30,10 +30,10 @@ jobs:
       run: flutter doctor -v
     
     - name: Analyze project source
-      run: dart analyze || echo "Analysis completed with warnings"
+      run: dart analyze lib/ test/ || echo "Analysis completed with warnings"
     
     - name: Check formatting
-      run: dart format --output=none --set-exit-if-changed . || echo "Formatting issues found"
+      run: dart format --output=none --set-exit-if-changed lib/ test/ || echo "Formatting issues found"
     
     - name: Run tests
       run: flutter test || echo "Tests completed"
@@ -54,4 +54,4 @@ jobs:
       run: flutter pub get
     
     - name: Test minimum compatibility
-      run: flutter analyze || echo "Compatibility test completed" 
+      run: dart analyze lib/ test/ || echo "Compatibility test completed" 

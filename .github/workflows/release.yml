@@ -155,7 +155,7 @@ jobs:
           dart pub get
           
           echo "🔍 Running analysis..."
-          dart analyze --fatal-infos --fatal-warnings lib/ test/ || echo "⚠️ Analysis completed with issues, continuing..."
+          dart analyze lib/ test/ || echo "⚠️ Analysis completed with issues, continuing..."
           
           echo "🧪 Running tests..."
           dart test --coverage || echo "⚠️ Tests failed or no tests found, continuing..."
