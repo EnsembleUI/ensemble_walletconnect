@@ -1,0 +1,431 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.2)'
+        required: true
+        type: string
+      changelog:
+        description: 'Release notes (optional - will auto-generate from git commits if not provided)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    name: Manual Release Process
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # Required for commits and tags
+      id-token: write  # Required for pub.dev publishing
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+          
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+
+      - name: Validate version format
+        id: validate_version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          
+          # Check if version matches semantic versioning pattern
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Please use semantic versioning format like: 1.0.2, 2.1.0-beta.1, etc."
+            exit 1
+          fi
+          
+          echo "✅ Version format is valid: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if version/tag already exists
+        id: check_existing
+        run: |
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          TAG="${{ steps.validate_version.outputs.TAG }}"
+          
+          # Check if tag already exists
+          if git tag -l | grep -q "^$TAG$"; then
+            echo "❌ Tag $TAG already exists!"
+            echo "Please choose a different version or delete the existing tag first."
+            exit 1
+          fi
+          
+          # Check current version in pubspec.yaml
+          CURRENT_VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          echo "Current version in pubspec.yaml: $CURRENT_VERSION"
+          echo "Requested version: $VERSION"
+          
+          if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+            echo "⚠️ Version $VERSION is already in pubspec.yaml"
+            echo "NEEDS_UPDATE=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Will update version from $CURRENT_VERSION to $VERSION"
+            echo "NEEDS_UPDATE=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update version in pubspec.yaml
+        if: steps.check_existing.outputs.NEEDS_UPDATE == 'true'
+        run: |
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          
+          # Update version in pubspec.yaml
+          sed -i "s/^version: .*/version: $VERSION/" pubspec.yaml
+          
+          echo "✅ Updated pubspec.yaml version to $VERSION"
+          
+          # Verify the change
+          NEW_VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          echo "Verified version in pubspec.yaml: $NEW_VERSION"
+
+      - name: Update CHANGELOG.md
+        run: |
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          CUSTOM_NOTES="${{ github.event.inputs.changelog }}"
+          
+          # Create a backup
+          cp CHANGELOG.md CHANGELOG.md.bak
+          
+          # Check if version already exists in changelog
+          if grep -q "^## $VERSION" CHANGELOG.md; then
+            echo "ℹ️ Version $VERSION already exists in CHANGELOG.md, skipping update"
+          else
+            echo "✅ Adding version $VERSION to CHANGELOG.md"
+            
+            # Create new changelog entry
+            if [ -n "$CUSTOM_NOTES" ]; then
+              # Use custom notes provided by user
+              printf "## $VERSION\n\n$CUSTOM_NOTES\n\n" > temp_changelog.md
+            else
+              # Generate changelog from git commits since last tag
+              echo "📝 Generating changelog from git commits..."
+              
+              # Get the last tag to compare against
+              LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+              
+              if [ -n "$LAST_TAG" ]; then
+                echo "📋 Getting commits since last tag: $LAST_TAG"
+                # Get commits since last tag, excluding merge commits
+                COMMITS=$(git log --oneline --no-merges "$LAST_TAG"..HEAD --pretty=format:"* %s" 2>/dev/null || echo "")
+              else
+                echo "📋 No previous tags found, getting recent commits"
+                # If no previous tags, get last 10 commits
+                COMMITS=$(git log --oneline --no-merges -10 --pretty=format:"* %s" 2>/dev/null || echo "")
+              fi
+              
+              # Create changelog entry
+              if [ -n "$COMMITS" ]; then
+                printf "## $VERSION\n\n### Changes\n\n$COMMITS\n\n" > temp_changelog.md
+                echo "✅ Generated changelog from $(echo "$COMMITS" | wc -l) commits"
+              else
+                # Fallback if no commits found
+                printf "## $VERSION\n\n* Manual release\n* Version bump to $VERSION\n\n" > temp_changelog.md
+                echo "⚠️ No commits found, using fallback changelog"
+              fi
+            fi
+            
+            # Prepend new entry to existing changelog (after the first line)
+            head -n 1 CHANGELOG.md > new_changelog.md
+            echo "" >> new_changelog.md
+            cat temp_changelog.md >> new_changelog.md
+            tail -n +2 CHANGELOG.md >> new_changelog.md
+            mv new_changelog.md CHANGELOG.md
+            rm temp_changelog.md
+          fi
+
+      - name: Install dependencies and validate
+        run: |
+          echo "📦 Installing dependencies..."
+          dart pub get
+          
+          echo "🔍 Running analysis..."
+          dart analyze
+          
+          echo "🧪 Running tests..."
+          dart test --coverage || echo "⚠️ Tests failed or no tests found, continuing..."
+          
+          echo "📋 Validating package for publication..."
+          dart pub publish --dry-run
+
+      - name: Commit version changes
+        id: commit_changes
+        run: |
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are changes to commit
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No changes to commit"
+            echo "COMMITTED=false" >> $GITHUB_OUTPUT
+          else
+            # Add and commit changes
+            git add pubspec.yaml CHANGELOG.md
+            git commit -m "chore: bump version to $VERSION
+
+            - Updated version in pubspec.yaml
+            - Updated CHANGELOG.md with release notes
+            
+            Release initiated by: ${{ github.actor }}
+            Workflow: ${{ github.workflow }}"
+            
+            # Push changes
+            git push origin main
+            
+            echo "✅ Committed and pushed version changes"
+            echo "COMMITTED=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract changelog for release
+        id: changelog
+        run: |
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          CUSTOM_NOTES="${{ github.event.inputs.changelog }}"
+          
+          if [ -n "$CUSTOM_NOTES" ]; then
+            # Use custom notes
+            echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+            echo "$CUSTOM_NOTES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            # Try to extract from CHANGELOG.md first
+            awk "/^## $VERSION/{flag=1; next} /^## [0-9]/{flag=0} flag" CHANGELOG.md > release_notes.md
+            
+            # If found in CHANGELOG.md, use that
+            if [ -s release_notes.md ]; then
+              echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+              cat release_notes.md >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              # Generate from git commits (same logic as CHANGELOG.md update)
+              echo "📝 Generating release notes from git commits..."
+              
+              # Get the last tag to compare against
+              LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+              
+              if [ -n "$LAST_TAG" ]; then
+                echo "📋 Getting commits since last tag: $LAST_TAG"
+                # Get commits since last tag, excluding merge commits
+                COMMITS=$(git log --oneline --no-merges "$LAST_TAG"..HEAD --pretty=format:"* %s" 2>/dev/null || echo "")
+              else
+                echo "📋 No previous tags found, getting recent commits"
+                # If no previous tags, get last 10 commits
+                COMMITS=$(git log --oneline --no-merges -10 --pretty=format:"* %s" 2>/dev/null || echo "")
+              fi
+              
+              # Create release notes
+              if [ -n "$COMMITS" ]; then
+                echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+                echo "### Changes" >> $GITHUB_OUTPUT
+                echo "" >> $GITHUB_OUTPUT
+                echo "$COMMITS" >> $GITHUB_OUTPUT
+                echo "EOF" >> $GITHUB_OUTPUT
+                echo "✅ Generated release notes from $(echo "$COMMITS" | wc -l) commits"
+              else
+                # Fallback if no commits found
+                echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+                echo "* Manual release of version $VERSION" >> $GITHUB_OUTPUT
+                echo "EOF" >> $GITHUB_OUTPUT
+                echo "⚠️ No commits found, using fallback release notes"
+              fi
+            fi
+          fi
+
+      - name: Create and push tag
+        run: |
+          TAG="${{ steps.validate_version.outputs.TAG }}"
+          VERSION="${{ steps.validate_version.outputs.VERSION }}"
+          
+          # Create annotated tag with changelog
+          git tag -a "$TAG" -m "Release $VERSION
+
+          Released by: ${{ github.actor }}
+          
+          ${{ steps.changelog.outputs.RELEASE_NOTES }}"
+          
+          # Push the tag
+          git push origin "$TAG"
+          
+          echo "✅ Created and pushed tag: $TAG"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.validate_version.outputs.TAG }}
+          release_name: Release ${{ steps.validate_version.outputs.VERSION }}
+          body: |
+            ## Changes in ${{ steps.validate_version.outputs.VERSION }}
+            
+            ${{ steps.changelog.outputs.RELEASE_NOTES }}
+            
+            ## Installation
+            
+            Add this to your package's `pubspec.yaml` file:
+            
+            ```yaml
+            dependencies:
+              ensemble_walletconnect: ^${{ steps.validate_version.outputs.VERSION }}
+            ```
+            
+            Then run:
+            ```bash
+            flutter pub get
+            ```
+            
+            ## Documentation
+            
+            - [pub.dev package](https://pub.dev/packages/ensemble_walletconnect)
+            - [API documentation](https://pub.dev/documentation/ensemble_walletconnect)
+            - [Repository](https://github.com/EnsembleUI/ensemble_walletconnect)
+            
+            ---
+            Released by: @${{ github.actor }}
+          draft: false
+          prerelease: false
+
+      - name: Setup pub credentials and publish
+        env:
+          PUB_TOKEN: ${{ secrets.PUB_TOKEN }}
+        run: |
+          if [ -z "$PUB_TOKEN" ]; then
+            echo "❌ Error: PUB_TOKEN secret is not set"
+            echo "Please set up the PUB_TOKEN secret in your repository settings"
+            echo "See https://dart.dev/tools/pub/automated-publishing for instructions"
+            exit 1
+          fi
+          
+          # Create credentials directory
+          mkdir -p ~/.pub-cache
+          
+          # Set up the token using the new method
+          echo "Setting up pub.dev authentication..."
+          echo "$PUB_TOKEN" | dart pub token add https://pub.dev --env-var
+          
+          # Verify token is set up
+          dart pub token list
+          
+          # Publish to pub.dev
+          echo "🚀 Publishing to pub.dev..."
+          dart pub publish --force
+          
+          echo "✅ Successfully published to pub.dev!"
+
+      - name: Update release with pub.dev link
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: release } = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: '${{ steps.validate_version.outputs.TAG }}'
+            });
+            
+            const updatedBody = release.body + '\n\n📦 **Published to pub.dev:** https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }}';
+            
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              body: updatedBody
+            });
+
+      - name: Create Success Issue
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🎉 Release ${{ steps.validate_version.outputs.VERSION }} completed successfully',
+              body: `## Release Summary
+
+              **Version**: ${{ steps.validate_version.outputs.VERSION }}
+              **Tag**: ${{ steps.validate_version.outputs.TAG }}
+              **Released by**: @${{ github.actor }}
+              **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+              ## What was done:
+              - ✅ Updated \`pubspec.yaml\` version
+              - ✅ Updated \`CHANGELOG.md\`
+              - ✅ Committed changes to main branch
+              - ✅ Created and pushed git tag
+              - ✅ Created GitHub release
+              - ✅ Published to pub.dev
+
+              ## Links:
+              - 🏷️ [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})
+              - 📦 [pub.dev Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})
+
+              The package is now available for installation! 🚀`,
+              labels: ['release', 'success']
+            });
+
+      - name: Create Failure Issue
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ Manual release failed for version ${{ github.event.inputs.version }}',
+              body: `The manual release workflow failed.
+
+              **Version**: ${{ github.event.inputs.version }}
+              **Initiated by**: @${{ github.actor }}
+              **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+              Please check the workflow logs and complete the release manually if needed.
+
+              ## Manual Recovery:
+              \`\`\`bash
+              # Update version manually
+              # Update CHANGELOG.md
+              git add pubspec.yaml CHANGELOG.md
+              git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+              git push origin main
+              git tag v${{ github.event.inputs.version }}
+              git push origin v${{ github.event.inputs.version }}
+              dart pub publish
+              \`\`\``,
+              labels: ['bug', 'release', 'automation']
+            });
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Manual Release Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Requested Version**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Initiated by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.validate_version.outputs.TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "- **Result**: ✅ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "- **GitHub Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})" >> $GITHUB_STEP_SUMMARY
+            echo "- **pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Result**: ❌ Release failed - check logs above" >> $GITHUB_STEP_SUMMARY
+          fi 

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Test and Analyze
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dart-version: [stable, beta]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.dart-version }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.dart-version }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: dart analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Dry run pub publish
+        run: flutter pub publish --dry-run
+
+  compatibility:
+    name: Check SDK Compatibility
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Dart (minimum supported version)
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 2.15.0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.32.5
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Test with minimum supported versions
+        run: |
+          dart analyze
+          flutter test 
