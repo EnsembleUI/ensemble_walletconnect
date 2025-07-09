@@ -197,115 +197,24 @@ jobs:
           echo "📋 Validating package for publication..."
           dart pub publish --dry-run
 
-      - name: Extract changelog for release
-        id: changelog
-        run: |
-          VERSION="${{ steps.validate_version.outputs.VERSION }}"
-          CUSTOM_NOTES="${{ github.event.inputs.changelog }}"
-
-          if [ -n "$CUSTOM_NOTES" ]; then
-            # Use custom notes
-            echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-            echo "$CUSTOM_NOTES" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            # Try to extract from CHANGELOG.md first
-            awk "/^## $VERSION/{flag=1; next} /^## [0-9]/{flag=0} flag" CHANGELOG.md > release_notes.md
-            
-            # If found in CHANGELOG.md, use that
-            if [ -s release_notes.md ]; then
-              echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-              cat release_notes.md >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
-            else
-              # Generate from git commits (same logic as CHANGELOG.md update)
-              echo "📝 Generating release notes from git commits..."
-              
-              # Get the last tag to compare against
-              LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-              
-              if [ -n "$LAST_TAG" ]; then
-                echo "📋 Getting commits since last tag: $LAST_TAG"
-                # Get commits since last tag, excluding merge commits
-                COMMITS=$(git log --oneline --no-merges "$LAST_TAG"..HEAD --pretty=format:"* %s" 2>/dev/null || echo "")
-              else
-                echo "📋 No previous tags found, getting recent commits"
-                # If no previous tags, get last 10 commits
-                COMMITS=$(git log --oneline --no-merges -10 --pretty=format:"* %s" 2>/dev/null || echo "")
-              fi
-              
-              # Create release notes
-              if [ -n "$COMMITS" ]; then
-                echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-                echo "### Changes" >> $GITHUB_OUTPUT
-                echo "" >> $GITHUB_OUTPUT
-                echo "$COMMITS" >> $GITHUB_OUTPUT
-                echo "EOF" >> $GITHUB_OUTPUT
-                echo "✅ Generated release notes from $(echo "$COMMITS" | wc -l) commits"
-              else
-                # Fallback if no commits found
-                echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-                echo "* Manual release of version $VERSION" >> $GITHUB_OUTPUT
-                echo "EOF" >> $GITHUB_OUTPUT
-                echo "⚠️ No commits found, using fallback release notes"
-              fi
-            fi
-          fi
-
       - name: Create and push tag
         run: |
           TAG="${{ steps.validate_version.outputs.TAG }}"
           VERSION="${{ steps.validate_version.outputs.VERSION }}"
 
-          # Create annotated tag with changelog
+          # Create annotated tag with changelog notes from CHANGELOG.md
+          CHANGELOG_NOTES=$(awk "/^## $VERSION/{flag=1; next} /^## [0-9]/{flag=0} flag" CHANGELOG.md || echo "* Release $VERSION")
+          
           git tag -a "$TAG" -m "Release $VERSION
 
           Released by: ${{ github.actor }}
 
-          ${{ steps.changelog.outputs.RELEASE_NOTES }}"
+          $CHANGELOG_NOTES"
 
           # Push the tag
           git push origin "$TAG"
 
           echo "✅ Created and pushed tag: $TAG"
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.validate_version.outputs.TAG }}
-          release_name: Release ${{ steps.validate_version.outputs.VERSION }}
-          body: |
-            ## Changes in ${{ steps.validate_version.outputs.VERSION }}
-
-            ${{ steps.changelog.outputs.RELEASE_NOTES }}
-
-            ## Installation
-
-            Add this to your package's `pubspec.yaml` file:
-
-            ```yaml
-            dependencies:
-              ensemble_walletconnect: ^${{ steps.validate_version.outputs.VERSION }}
-            ```
-
-            Then run:
-            ```bash
-            flutter pub get
-            ```
-
-            ## Documentation
-
-            - [pub.dev package](https://pub.dev/packages/ensemble_walletconnect)
-            - [API documentation](https://pub.dev/documentation/ensemble_walletconnect)
-            - [Repository](https://github.com/EnsembleUI/ensemble_walletconnect)
-
-            ---
-            Released by: @${{ github.actor }}
-          draft: false
-          prerelease: false
 
       - name: Summary
         if: always()
@@ -317,10 +226,12 @@ jobs:
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ job.status }}" = "success" ]; then
-            echo "- **Result**: ✅ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
-            echo "- **GitHub Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})" >> $GITHUB_STEP_SUMMARY
-            echo "- **pub.dev Publishing**: 🚀 Automatic publishing will start shortly (triggered by tag push)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Check pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Result**: ✅ Tag created successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "- **Next Step**: 🚀 The publish workflow will automatically:" >> $GITHUB_STEP_SUMMARY
+            echo "  - Create the GitHub release" >> $GITHUB_STEP_SUMMARY
+            echo "  - Publish to pub.dev" >> $GITHUB_STEP_SUMMARY
+            echo "- **Monitor**: Check the [Actions tab](https://github.com/${{ github.repository }}/actions) for the publish workflow" >> $GITHUB_STEP_SUMMARY
+            echo "- **pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Result**: ❌ Release failed - check logs above" >> $GITHUB_STEP_SUMMARY
           fi
