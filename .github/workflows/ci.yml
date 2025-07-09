@@ -15,23 +15,19 @@ jobs:
       matrix:
         include:
           - dart-version: stable
-            flutter-version: stable
+            flutter-version: '3.19.0'
           - dart-version: beta
-            flutter-version: beta
+            flutter-version: '3.20.0'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: ${{ matrix.dart-version }}
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.flutter-version }}
+          channel: stable
 
       - name: Install dependencies
         run: flutter pub get
@@ -63,15 +59,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Dart (minimum supported version)
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 2.15.0
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.0.0
+          flutter-version: '3.3.0'
+          channel: stable
 
       - name: Install dependencies
         run: flutter pub get
