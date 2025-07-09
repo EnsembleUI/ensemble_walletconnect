@@ -37,6 +37,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.2'
+          cache: true
 
       - name: Validate version format
         id: validate_version
@@ -159,9 +160,6 @@ jobs:
           
           echo "🧪 Running tests..."
           dart test --coverage || echo "⚠️ Tests failed or no tests found, continuing..."
-          
-          echo "📋 Validating package for publication..."
-          dart pub publish --dry-run
 
       - name: Commit version changes
         id: commit_changes
@@ -193,6 +191,11 @@ jobs:
             echo "✅ Committed and pushed version changes"
             echo "COMMITTED=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Validate package for publication
+        run: |
+          echo "📋 Validating package for publication..."
+          dart pub publish --dry-run
 
       - name: Extract changelog for release
         id: changelog
