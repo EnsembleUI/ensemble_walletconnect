@@ -307,12 +307,6 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Publish package to pub.dev
-        run: |
-          echo "📦 Publishing package to pub.dev..."
-          dart pub publish --force
-          echo "✅ Package published to pub.dev"
-
       - name: Summary
         if: always()
         run: |
@@ -325,7 +319,8 @@ jobs:
           if [ "${{ job.status }}" = "success" ]; then
             echo "- **Result**: ✅ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
             echo "- **GitHub Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})" >> $GITHUB_STEP_SUMMARY
-            echo "- **pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
+            echo "- **pub.dev Publishing**: 🚀 Automatic publishing will start shortly (triggered by tag push)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Check pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Result**: ❌ Release failed - check logs above" >> $GITHUB_STEP_SUMMARY
           fi
