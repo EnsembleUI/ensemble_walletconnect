@@ -47,7 +47,7 @@ jobs:
     - name: Set up Flutter (Minimum Supported Version)
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.0'  # Minimum version that supports Dart 2.18.0
+        flutter-version: '3.27.2'
         cache: true
     
     - name: Install dependencies
