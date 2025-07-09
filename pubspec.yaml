@@ -1,5 +1,5 @@
 name: ensemble_walletconnect
-description: Open protocol for connecting decentralized applications to mobile wallets with QR code scanning or deep linking.
+description: Open protocol for connecting decentralised applications to mobile wallets with QR code scanning or deep linking. Maintained by Ensemble.
 version: 1.0.0
 homepage: https://walletconnect.org/
 repository: https://github.com/EnsembleUI/ensemble_walletconnect
@@ -10,32 +10,35 @@ environment:
 
 dependencies:
   # WebSocket Channel
-  web_socket_channel: ^2.1.0
+  web_socket_channel: ^3.0.3
 
   # UUID
   uuid: ^4.5.1
 
   # Cryptography
-  cryptography: ^2.0.5
+  cryptography: ^2.7.0
 
   # Hex
-  convert: ^3.0.1
+  convert: ^3.1.2
 
   # JSON Annotation
-  json_annotation: ^4.4.0
+  json_annotation: ^4.9.0
 
   # Stack trace
-  stack_trace: ^1.10.0
+  stack_trace: ^1.12.1
 
 dev_dependencies:
-  # Testing framework
-  test: ^1.20.1
+  # Lints
+  flutter_lints: ^5.0.0
 
-  # JSON Serialization
-  json_serializable: ^6.1.4
+  # JSON Serializable
+  json_serializable: ^6.8.0
 
   # Build runner
-  build_runner: ^2.1.7
+  build_runner: ^2.4.12
+
+  # Test framework
+  test: ^1.25.8
 
 # Topics help users discover your package
 topics:
