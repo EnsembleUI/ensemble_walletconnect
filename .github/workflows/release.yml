@@ -306,3 +306,26 @@ jobs:
             Released by: @${{ github.actor }}
           draft: false
           prerelease: false
+
+      - name: Publish package to pub.dev
+        run: |
+          echo "📦 Publishing package to pub.dev..."
+          dart pub publish --force
+          echo "✅ Package published to pub.dev"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Manual Release Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Requested Version**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Initiated by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.validate_version.outputs.TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "- **Result**: ✅ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "- **GitHub Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.validate_version.outputs.TAG }})" >> $GITHUB_STEP_SUMMARY
+            echo "- **pub.dev**: [View Package](https://pub.dev/packages/ensemble_walletconnect/versions/${{ steps.validate_version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Result**: ❌ Release failed - check logs above" >> $GITHUB_STEP_SUMMARY
+          fi
