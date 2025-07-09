@@ -323,8 +323,8 @@ jobs:
           
           # Set up the token using the new method
           echo "Setting up pub.dev authentication..."
-          dart pub token add https://pub.dev --env-var PUB_TOKEN
-          
+          dart pub token add https://pub.dev/packages/ensemble_walletconnect/ --env-var PUB_TOKEN
+
           # Verify token is set up
           dart pub token list
           
