@@ -1,4 +1,10 @@
 
+## 1.0.2
+
+### Changes
+
+* Fix dependency conflict with Flutter SDK by changing stack_trace constraint from ^1.12.1 to ^1.12.0
+* Resolves compatibility issue with integration_test package in Flutter 3.27
 
 ## 1.0.1
 
