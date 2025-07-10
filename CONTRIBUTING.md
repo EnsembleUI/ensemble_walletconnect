@@ -58,3 +58,14 @@ on Discord.
 
 By contributing to walletconnect-dart-sdk, you agree that your contributions will be licensed
 under its [MIT license](LICENSE).
+
+## Releasing a new version
+
+To release a new version, you need to:
+
+1. Bump the version in the `pubspec.yaml` file.
+2. Update the `CHANGELOG.md` file to reflect the changes made in the new version.
+3. Create a new tag for the new version.
+    - `git tag -a v1.0.2 -m "Release 1.0.2"`
+4. Push the new tag to the repository.
+    - `git push origin v1.0.2`
