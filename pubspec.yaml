@@ -1,6 +1,6 @@
 name: ensemble_walletconnect
 description: Open protocol for connecting decentralised applications to mobile wallets with QR code scanning or deep linking. Maintained by Ensemble.
-version: 1.0.2
+version: 1.0.3
 homepage: https://walletconnect.org/
 repository: https://github.com/EnsembleUI/ensemble_walletconnect
 issue_tracker: https://github.com/EnsembleUI/ensemble_walletconnect/issues
@@ -10,7 +10,7 @@ environment:
 
 dependencies:
   # WebSocket Channel
-  web_socket_channel: ^3.0.3
+  web_socket_channel: ">=2.4.0 <4.0.0"
 
   # UUID
   uuid: ^4.5.1
