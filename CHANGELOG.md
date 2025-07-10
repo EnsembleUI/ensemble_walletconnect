@@ -3,8 +3,8 @@
 
 ### Changes
 
-* Fix dependency conflict with web_socket_channel by changing constraint from ^3.0.3 to >=2.4.0 <4.0.0
-* Resolves compatibility issue with packages that require web_socket_channel 2.x
+* Fix dependency conflict with web_socket_channel by changing constraint from ^3.0.3 to >=2.0.0 <4.0.0
+* Resolves compatibility issue with packages that require web_socket_channel 2.x (like ensemble_chat)
 * Maintains compatibility with both Flutter 3.27 and Flutter 3.32
 
 ## 1.0.2
